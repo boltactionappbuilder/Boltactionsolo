@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BA Solo">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1b1f17">
+<title>Bolt Action Solo</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231b1f17'/%3E%3Crect x='28' y='34' width='74' height='108' rx='8' fill='%235b7a3a' transform='rotate(-8 65 88)'/%3E%3Crect x='78' y='34' width='74' height='108' rx='8' fill='%23d8802a' transform='rotate(8 115 88)'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ground:#1b1f17;
+  --panel:#262c20;
+  --line:#3a4230;
+  --paper:#f1ead7;
+  --muted:#a6a98f;
+  --unit:#587a38;
+  --unit-dark:#2f4620;
+  --order:#d8802a;
+  --order-dark:#4a2a08;
+  --alert:#c8472f;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ground);color:var(--paper);
+  font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;font-size:17px;line-height:1.35;
+  -webkit-text-size-adjust:100%;overscroll-behavior:none}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 16px) env(safe-area-inset-left);min-height:100vh}
+.cond{font-family:"Avenir Next Condensed","Arial Narrow","Roboto Condensed",sans-serif-condensed,sans-serif;font-stretch:condensed;letter-spacing:.01em}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 6px}
+header h1{margin:0;font-size:24px;font-weight:700}
+header button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px 12px;font-size:15px}
+main{padding:8px 16px 24px;max-width:560px;margin:0 auto}
+h2{font-size:20px;margin:18px 0 8px;font-weight:700}
+.sub{color:var(--muted);font-size:15px;margin:0 0 10px}
+
+/* buttons */
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:16px;font-size:18px;font-weight:700;
+  background:var(--paper);color:var(--ground);margin:10px 0}
+.btn.unit{background:var(--unit);color:var(--paper)}
+.btn.order{background:var(--order);color:var(--order-dark)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--paper);font-weight:600}
+.btn.warn{background:transparent;border:1px solid var(--alert);color:#f0a090;font-weight:600}
+.btn:disabled{opacity:.35}
+.btn:active:not(:disabled){transform:scale(.985)}
+.row{display:flex;gap:10px}
+.row .btn{margin:10px 0}
+
+/* setup */
+.list{background:var(--panel);border-radius:12px;overflow:hidden}
+.item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .name{font-size:18px}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--ground);color:var(--paper);font-size:22px}
+.stepper span{min-width:30px;text-align:center;font-size:20px;font-weight:700}
+.summary{display:flex;gap:10px;margin:12px 0}
+.stat{flex:1;background:var(--panel);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:26px}
+.stat small{color:var(--muted)}
+
+/* cards */
+.table{display:flex;gap:12px;margin:6px 0 4px}
+.slot{flex:1;min-width:0}
+.slot-label{font-size:14px;color:var(--muted);margin:0 0 6px 2px}
+.card{position:relative;border-radius:14px;aspect-ratio:5/7;padding:14px 12px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;
+  box-shadow:0 6px 0 rgba(0,0,0,.35)}
+.card.unit{background:var(--unit);color:var(--paper)}
+.card.order{background:var(--order);color:var(--order-dark)}
+.card .kind{font-size:13px;font-weight:700;opacity:.8}
+.card .title{font-size:30px;font-weight:800;line-height:1;word-break:break-word}
+.card .rule{font-size:13px;line-height:1.3;font-weight:600}
+.card::after{content:"";position:absolute;right:-26px;top:-26px;width:60px;height:60px;transform:rotate(45deg);background:rgba(0,0,0,.18)}
+.card.empty{background:transparent;border:2px dashed var(--line);box-shadow:none;align-items:center;justify-content:center;color:var(--muted);text-align:center;font-size:15px}
+.card.empty::after{display:none}
+.card.flip{animation:flip .28s ease-out}
+@keyframes flip{from{transform:rotateY(80deg);opacity:.2}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.card.flip{animation:none}}
+
+.notice{background:var(--panel);border-left:4px solid var(--order);border-radius:8px;padding:10px 12px;margin:10px 0;font-size:16px}
+.notice.u{border-left-color:var(--unit)}
+.notice.bad{border-left-color:var(--alert)}
+
+.decks{display:flex;gap:10px;margin:8px 0 0}
+.decks div{flex:1;background:var(--panel);border-radius:10px;padding:8px 12px;font-size:15px;color:var(--muted)}
+.decks b{color:var(--paper);font-size:19px}
+
+/* roster */
+.roster .item{padding:8px 14px}
+.roster .item small{color:var(--muted);display:block;font-size:13px}
+.roster button.lost{border:1px solid var(--line);background:none;color:var(--muted);border-radius:8px;padding:8px 12px;font-size:14px}
+.roster .gone{opacity:.35}
+
+/* rules sheet */
+.sheet{position:fixed;inset:0;background:var(--ground);z-index:5;overflow:auto;padding:env(safe-area-inset-top) 18px calc(env(safe-area-inset-bottom) + 24px)}
+.sheet h2:first-of-type{margin-top:18px}
+.sheet p,.sheet li{font-size:16px}
+.sheet ol,.sheet ul{padding-left:20px}
+.hidden{display:none}
+:focus-visible{outline:3px solid var(--paper);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1 class="cond" id="title">Bolt Action Solo</h1>
+  <button id="rulesBtn" aria-label="Show rules">Rules</button>
+</header>
+<main id="app"></main>
+
+<div class="sheet hidden" id="sheet" role="dialog" aria-label="Rules">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px">
+    <h1 class="cond" style="margin:0;font-size:24px">Rules</h1>
+    <button class="btn ghost" style="width:auto;margin:0;padding:8px 16px" id="closeRules">Close</button>
+  </div>
+  <h2 class="cond">Each enemy order dice</h2>
+  <ol>
+    <li>Turn over the top Unit card. Choose one of the matching enemy units that has no order yet.</li>
+    <li>If the unit can only do one specific order, give it that. Otherwise turn over the top Order card.</li>
+    <li>If the unit can't make that order (off-table units need Run or Advance), put the card at the bottom of the Order pile and draw again.</li>
+    <li>Make any Order Tests. The unit may go Down.</li>
+    <li>Carry out the order.</li>
+  </ol>
+  <h2 class="cond">End of turn</h2>
+  <p>Make Recovery tests, put the order dice back in the bag, then shuffle the Unit and Order cards back into their piles. The app does this for you.</p>
+  <h2 class="cond">Rally</h2>
+  <p>When you draw a Run order you can use it to rally, or send Down, any unit within 12" of the activated unit, as long as that unit doesn't already have an order dice. That unit then gets the order dice.</p>
+  <h2 class="cond">Order Card pile runs out</h2>
+  <p>Shuffle the Order cards and start again. The app does this automatically.</p>
+  <h2 class="cond">Setting up</h2>
+  <ul>
+    <li>Pick both armies to an agreed points value.</li>
+    <li>Add one Unit card for each unit in the enemy force.</li>
+    <li>Use two Order cards per enemy order dice. A ratio of 3 Advance : 2 Fire : 1 Run is recommended, and you can change it.</li>
+  </ul>
+  <h2 class="cond">Notes</h2>
+  <p class="sub">Combat Level cards are not in the PDF this app is based on, so they aren't included. Solo play cards by Martin Otten. Fan-made aid for personal use; Bolt Action is a Warlord Games game.</p>
+</div>
+
+<script>
+const UNIT_TYPES = ["Commander","Infantry Squad","Anti-Tank","MMG Team","HMG Team","Sniper Team","Forward Observer","Medic","Tank","Armoured Car","Artillery","Transport"];
+const ORDERS = {
+  Advance:"No enemy in range or line of sight? You can Rally or go Down instead.",
+  Fire:"No enemy in range or line of sight? You can Advance instead.",
+  Run:"Any enemy in range? You can Assault that unit instead of Running."
+};
+const KEY = "ba-solo-v1";
+
+let S = load() || {
+  mode:"setup",
+  units:{"Commander":1,"Infantry Squad":3,"MMG Team":1,"Tank":1},
+  ratio:{Advance:3,Fire:2,Run:1}
+};
+
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+const $ = s => document.querySelector(s);
+const app = $("#app");
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+const totalUnits = () => Object.values(S.units).reduce((a,b)=>a+b,0);
+
+function orderCounts(total){
+  const w = S.ratio, sum = w.Advance+w.Fire+w.Run;
+  if(!sum||!total) return {Advance:total,Fire:0,Run:0};
+  const raw = Object.keys(w).map(k=>({k,v:total*w[k]/sum}));
+  const out = {}; let used=0;
+  raw.forEach(r=>{out[r.k]=Math.floor(r.v);used+=out[r.k];});
+  raw.sort((a,b)=>(b.v-Math.floor(b.v))-(a.v-Math.floor(a.v)));
+  for(let i=0;used<total;i++,used++) out[raw[i%raw.length].k]++;
+  return out;
+}
+
+function buildDecks(){
+  const unitCards=[]; for(const t in S.units) for(let i=0;i<S.units[t];i++) unitCards.push(t);
+  const oc=orderCounts(unitCards.length*2), orderCards=[];
+  for(const k in oc) for(let i=0;i<oc[k];i++) orderCards.push(k);
+  S.unitDeck=shuffle(unitCards); S.unitDiscard=[];
+  S.orderDeck=shuffle(orderCards); S.orderDiscard=[];
+  S.curUnit=null; S.curOrder=null; S.msg=null; S.turn=S.turn||1;
+}
+
+function drawUnit(){
+  if(!S.unitDeck.length){ S.unitDeck=shuffle(S.unitDiscard); S.unitDiscard=[]; S.msg={t:"Unit pile was empty. Discards reshuffled.",k:"bad"}; }
+  else S.msg=null;
+  if(S.curUnit) S.unitDiscard.push(S.curUnit);
+  if(S.curOrder){ S.orderDiscard.push(S.curOrder); S.curOrder=null; }
+  S.curUnit = S.unitDeck.length ? S.unitDeck.shift() : null;
+  S.flip="unit"; save(); render();
+}
+function drawOrder(){
+  if(!S.orderDeck.length){ S.orderDeck=shuffle(S.orderDiscard); S.orderDiscard=[]; S.msg={t:"Order pile ran out. Reshuffled.",k:"bad"}; }
+  if(S.curOrder){ S.orderDiscard.push(S.curOrder); S.curOrder=null; }
+  S.curOrder = S.orderDeck.length ? S.orderDeck.shift() : null;
+  S.flip="order"; save(); render();
+}
+function cannotDo(){
+  if(!S.curOrder) return;
+  S.orderDeck.push(S.curOrder); S.curOrder=null;       // to the bottom
+  S.msg={t:"Put to the bottom of the pile. Drawing again.",k:"u"};
+  drawOrder();
+}
+function fixedOrder(){
+  if(S.curOrder){ S.orderDiscard.push(S.curOrder); S.curOrder=null; }
+  S.msg={t:"Unit has a fixed order. Give it that order.",k:"u"}; save(); render();
+}
+function doneUnit(){
+  if(S.curUnit) S.unitDiscard.push(S.curUnit);
+  if(S.curOrder) S.orderDiscard.push(S.curOrder);
+  S.curUnit=null; S.curOrder=null; S.msg=null; S.flip=null; save(); render();
+}
+function endTurn(){
+  doneUnit();
+  S.unitDeck=shuffle(S.unitDeck.concat(S.unitDiscard)); S.unitDiscard=[];
+  S.orderDeck=shuffle(S.orderDeck.concat(S.orderDiscard)); S.orderDiscard=[];
+  S.turn++; S.msg={t:"Turn "+S.turn+". Piles shuffled. Make Recovery tests and refill the dice bag.",k:"u"};
+  save(); render();
+}
+function casualty(t){
+  if(!S.units[t]) return;
+  S.units[t]--; if(!S.units[t]) delete S.units[t];
+  // remove one matching card, preferring the draw pile, then discards
+  for(const pile of ["unitDeck","unitDiscard"]){
+    const i=S[pile].indexOf(t); if(i>-1){ S[pile].splice(i,1); break; }
+  }
+  save(); render();
+}
+function startGame(){ S.turn=1; S.mode="play"; buildDecks(); save(); render(); }
+function backToSetup(){
+  if(!confirm("Return to setup? The current game will be lost.")) return;
+  S.mode="setup"; save(); render();
+}
+
+/* ---------- views ---------- */
+const stepper=(id,val)=>`<div class="stepper"><button data-a="dec" data-id="${id}" aria-label="Fewer">−</button><span>${val}</span><button data-a="inc" data-id="${id}" aria-label="More">+</button></div>`;
+
+function renderSetup(){
+  const n=totalUnits(), oc=orderCounts(n*2);
+  app.innerHTML=`
+    <p class="sub">Pick the enemy force. One Unit card is made per unit, and two Order cards per order dice.</p>
+    <div class="list">
+      ${UNIT_TYPES.map(t=>`<div class="item"><span class="name cond">${t}</span>${stepper("u:"+t,S.units[t]||0)}</div>`).join("")}
+    </div>
+    <h2 class="cond">Order card ratio</h2>
+    <div class="list">
+      ${Object.keys(S.ratio).map(k=>`<div class="item"><span class="name cond">${k}</span>${stepper("r:"+k,S.ratio[k])}</div>`).join("")}
+    </div>
+    <div class="summary">
+      <div class="stat"><b>${n}</b><small>Unit cards</small></div>
+      <div class="stat"><b>${n*2}</b><small>Order cards</small></div>
+    </div>
+    <p class="sub">Order deck: ${oc.Advance} Advance, ${oc.Fire} Fire, ${oc.Run} Run</p>
+    <button class="btn unit" id="start" ${n?"":"disabled"}>Start game</button>`;
+}
+
+function renderPlay(){
+  const unitCard = S.curUnit
+    ? `<div class="card unit cond ${S.flip==="unit"?"flip":""}"><div class="kind">Unit card</div><div class="title">${S.curUnit}</div><div class="rule">Choose one matching unit without an order.</div></div>`
+    : `<div class="card empty">Draw a unit when an enemy dice comes out</div>`;
+  const orderCard = S.curOrder
+    ? `<div class="card order cond ${S.flip==="order"?"flip":""}"><div class="kind">Order card</div><div class="title">${S.curOrder}</div><div class="rule">${ORDERS[S.curOrder]}</div></div>`
+    : `<div class="card empty">${S.curUnit?"Draw an order for this unit":"No order yet"}</div>`;
+
+  let actions="";
+  if(!S.curUnit){
+    actions=`<button class="btn unit" data-a="drawUnit" ${S.unitDeck.length||S.unitDiscard.length?"":"disabled"}>Enemy dice drawn: turn Unit card</button>`;
+  } else if(!S.curOrder){
+    actions=`<button class="btn order" data-a="drawOrder">Turn Order card</button>
+             <div class="row"><button class="btn ghost" data-a="fixed">Fixed order</button><button class="btn ghost" data-a="done">Skip</button></div>`;
+  } else {
+    actions=`<button class="btn" data-a="done">Order carried out</button>
+             <button class="btn warn" data-a="cannot">Can't do this order: redraw</button>`;
+  }
+
+  const roster = Object.keys(S.units).map(t=>`
+    <div class="item"><div><span class="cond" style="font-size:18px">${t}</span></div>
+    <div style="display:flex;align-items:center;gap:10px"><b style="font-size:20px">${S.units[t]}</b><button class="lost" data-a="lost" data-id="${t}">Lost one</button></div></div>`).join("")
+    || `<div class="item"><span class="sub" style="margin:0">No enemy units left.</span></div>`;
+
+  app.innerHTML=`
+    <div class="decks cond">
+      <div>Turn <b>${S.turn}</b></div>
+      <div>Units left <b>${S.unitDeck.length}</b></div>
+      <div>Orders left <b>${S.orderDeck.length}</b></div>
+    </div>
+    ${S.msg?`<div class="notice ${S.msg.k||""}">${S.msg.t}</div>`:""}
+    <div class="table" style="margin-top:14px">
+      <div class="slot"><p class="slot-label">Unit</p>${unitCard}</div>
+      <div class="slot"><p class="slot-label">Order</p>${orderCard}</div>
+    </div>
+    ${actions}
+    <div class="row" style="margin-top:0">
+      <button class="btn ghost" data-a="endTurn">End turn: shuffle</button>
+      <button class="btn ghost" data-a="setup">Setup</button>
+    </div>
+    <h2 class="cond">Enemy roster</h2>
+    <div class="list roster">${roster}</div>
+    <p class="sub" style="margin-top:10px">Rally: a Run order can rally or send Down any unit within 12" that has no order dice.</p>`;
+}
+
+function render(){ S.mode==="play" ? renderPlay() : renderSetup(); S.flip=null; }
+
+/* ---------- events ---------- */
+app.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.id==="start") return startGame();
+  const a=b.dataset.a, id=b.dataset.id;
+  if(a==="inc"||a==="dec"){
+    const d=a==="inc"?1:-1;
+    if(id.startsWith("u:")){ const t=id.slice(2); const v=Math.max(0,Math.min(12,(S.units[t]||0)+d)); v?S.units[t]=v:delete S.units[t]; }
+    else { const k=id.slice(2); S.ratio[k]=Math.max(0,Math.min(9,S.ratio[k]+d)); }
+    save(); return renderSetup();
+  }
+  ({drawUnit,drawOrder,done:doneUnit,cannot:cannotDo,fixed:fixedOrder,endTurn,setup:backToSetup,lost:()=>casualty(id)})[a]?.();
+});
+$("#rulesBtn").onclick=()=>$("#sheet").classList.remove("hidden");
+$("#closeRules").onclick=()=>$("#sheet").classList.add("hidden");
+
+// Resume an in-progress game, or fall back to setup if saved state is incomplete
+if(S.mode==="play" && !S.unitDeck){ S.mode="setup"; }
+render();
+</script>
+</body>
+</html>
